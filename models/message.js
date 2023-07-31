@@ -13,7 +13,7 @@ const messageSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now,
-    }, attachment: {
+    }, media: {
         type: String,
     }
 });
