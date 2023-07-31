@@ -5,28 +5,31 @@ class ChatRepository {
 
     async create({ lowerId, higherId }) {
         return await Chat.create({
-            lowerId: ObjectId(lowerId),
-            higherId: ObjectId(higherId),
+            lowerId: new ObjectId(lowerId),
+            higherId: new ObjectId(higherId),
             messages: [],
         });
     }
 
     async getChatByUsersId({ lowerId, higherId }) {
         return await Chat.findOne({
-            lowerId: ObjectId(lowerId),
-            higherId: ObjectId(higherId)
-        });
+            lowerId: new ObjectId(lowerId),
+            higherId: new ObjectId(higherId)
+        }).populate('lowerId').populate('higherId');
     }
 
     async getChatById(chatId) {
-        return await Chat.findOne({ _id: ObjectId(chatId) });
+        // return await Chat.findOne({ _id: ObjectId(chatId) });
+        return await Chat.findOne({
+            _id: new ObjectId(chatId)
+        }).populate('lowerId').populate('higherId');
     }
 
     async getUserChats(userId) {
         return await Chat.find({
             $or: [
-                { 'lowerId': ObjectId(userId) },
-                { 'higherId': ObjectId(userId) }
+                { 'lowerId': new ObjectId(userId) },
+                { 'higherId': new ObjectId(userId) }
             ]
         }).populate('lowerId').populate('higherId');
     }

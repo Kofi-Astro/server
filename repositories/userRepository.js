@@ -1,9 +1,11 @@
+// const User = require('../models/user');
 const User = require('../models/user');
 const ObjectId = require('mongoose').Types.ObjectId;
 
 
 class UserRepository {
     async create({ email, username, password }) {
+
         await User.create({
             email,
             username,
@@ -17,7 +19,7 @@ class UserRepository {
     }
 
     async getUsersWhereNot(userId) {
-        return await User.find({ _id: { $ne: ObjectId(userId) } });
+        return await User.find({ _id: { $ne: new ObjectId(userId) } });
     }
 }
 

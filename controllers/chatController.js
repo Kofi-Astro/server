@@ -1,6 +1,7 @@
 const ChatRepository = require('../repositories/chatRepository');
 const ObjectId = require('mongoose').Types.ObjectId;
 const Dates = require('../utils/dates');
+const shared = require('../shared/index');
 
 class ChatController {
     async getChatByUserId(req, res) {
@@ -11,23 +12,25 @@ class ChatController {
             const lowerId = userId < myId ? userId : myId;
             const higherId = userId > myId ? userId : myId;
 
-            let chat = await ChatRepository.getChatByUserId({
+            let chat = await ChatRepository.getChatByUsersId({
                 lowerId,
                 higherId
             });
 
             if (!chat) {
                 chat = await ChatRepository.create({
-                    lowerId, higherId
-
+                    lowerId,
+                    higherId
                 });
+                chat = await ChatRepository.getChatById(chat._id);
             }
 
-            return req.json({
+            return res.json({
                 chat
             });
 
         } catch (error) {
+            console.error(error);
             return res.json({
                 error: true,
                 errorMessage: "Error occured: ", error
@@ -36,9 +39,15 @@ class ChatController {
     }
 
     async getChats(req, res) {
+        console.log('Entry into getChats')
         try {
+            const myId = req._id;
+            console.log('myId', myId);
+            const chats = await ChatRepository.getUserChats(myId);
+            return res.json({ chats });
 
         } catch (error) {
+            console.error(error);
             return res.json({
                 error: true,
                 errorMessage: error
@@ -63,15 +72,30 @@ class ChatController {
             }
 
             const chat = await ChatRepository.getChatById(chatId);
-            const datetime = Date.getDateTime();
-            const messageId = ObjectId();
-            chat.messages.push({
+            const datetime = Dates.getDateTime();
+            const messageId = new ObjectId();
+            // chat.messages.push({
+            const message = {
                 _id: messageId,
-                userId: ObjectId(myId),
+                userId: new ObjectId(myId),
                 text,
                 createdAt: datetime
+            };
+
+            chat.messages.push(message);
+            const users = shared.users;
+            const findUsers = users.filter(user => (user._id == chat.lowerId._id || user._id == chat.higherId._id) && user._id != myId);
+            console.log("findUsers: ", findUsers);
+            findUsers.forEach(user => {
+                console.log('Issuing user with socket: ', user.socket.id);
+                user.socket.emit('message', {
+                    ...chat,
+                    // messages,
+                    messages: chat.messages,
+                });
+                user.socket.emit('message', chat);
             });
-            console.log('chat now: ', chat);
+            // console.log('chat now: ', chat);
             chat.save();
             return res.json({
                 chat

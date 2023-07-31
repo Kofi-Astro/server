@@ -3,9 +3,10 @@ const express = require("express");
 const mongoDB = require('./database/index');
 const socketIO = require('socket.io');
 const shared = require('./shared');
+const { use } = require('./routes');
 
-// const port = process.env.PORT || 5000;
-const port = 5000;
+const port = process.env.PORT || 5000;
+// const port = 5000;
 
 const app = express();
 
@@ -21,8 +22,12 @@ shared.users = users;
 
 io.on('connection', socket => {
   socket.on('user-in', (user) => {
-    users.push({ ...user, socketId: socket.id });
-    io.emit('users-update', users);
+    // users.push({ ...user, socketId: socket.id });
+    // io.emit('users-update', users);
+
+    users.push({ ...user, socket });
+    shared.users = users;
+    // console.log('users now ', users);
   });
 
   // socket.on('entered-chat', (socketId) => {
@@ -43,12 +48,16 @@ io.on('connection', socket => {
 
   socket.on('user-left', () => {
     users = users.filter(x => x.socketId !== socket.id);
-    io.emit('users-update', users);
+    // io.emit('users-update', users);
+    shared.users = users;
+    console.log('user left', users);
   });
 
   socket.on('disconnect', () => {
     users = users.filter(x => x.socketId !== socket.id);
-    io.emit('users-update', users);
+    // io.emit('users-update', users);
+    shared.users = users;
+    console.log('user disconnected', users);
   });
 });
 
